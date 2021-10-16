@@ -6,22 +6,15 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
-import android.nfc.tech.MifareClassic;
-import android.nfc.tech.MifareUltralight;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.NativePlugin;
-import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
-import com.getcapacitor.annotation.CapacitorPlugin;
-import com.getcapacitor.annotation.Permission;
-import com.getcapacitor.annotation.PermissionCallback;
 
 @NativePlugin(
         requestCodes={SunmiNfcPlugin.REQUEST_NFC}

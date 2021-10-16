@@ -15,16 +15,23 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.NativePlugin;
+import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.annotation.Permission;
+import com.getcapacitor.annotation.PermissionCallback;
 
-@NativePlugin(
-        requestCodes={SunmiNfcPlugin.REQUEST_NFC}
+@CapacitorPlugin(
+        name = "SunmiNfc",
+        permissions = {
+                @Permission(
+                        alias = "nfc",
+                        strings = {Manifest.permission.NFC}
+                )
+        }
 )
-
-@CapacitorPlugin(name = "SunmiNfc")
 public class SunmiNfcPlugin extends Plugin {
 
     //Intialize attributes
@@ -56,36 +63,25 @@ public class SunmiNfcPlugin extends Plugin {
 
     @PluginMethod()
     public void discoverNfcCard(PluginCall call) {
-        saveCall(call);
-        pluginRequestPermission(Manifest.permission.NFC,
-                REQUEST_NFC);
+        if (getPermissionState("nfc") != PermissionState.GRANTED) {
+            requestPermissionForAlias("nfc", call, "nfcPermsCallback");
+        } else {
+            initNdfAdapter(call);
+        }
     }
 
-    @Override
-    protected void handleRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.handleRequestPermissionsResult(requestCode, permissions, grantResults);
-
-
-        PluginCall savedCall = getSavedCall();
-        if (savedCall == null) {
-            Log.d(TAG, "No stored plugin call for permissions request result");
-            return;
-        }
-
-        for(int result : grantResults) {
-            if (result == PackageManager.PERMISSION_DENIED) {
-                Log.d(TAG, "User denied permission");
-                return;
-            }
-        }
-
-        if (requestCode == REQUEST_NFC) {
-            // We got the permission!
-            initNdfAdapter(savedCall);
+    @PermissionCallback
+    private void nfcPermsCallback(PluginCall call) {
+        if (getPermissionState("nfc") == PermissionState.GRANTED) {
+            initNdfAdapter(call);
+        } else {
+            call.reject("Permission is required to read nfc card");
         }
     }
 
     private void initNdfAdapter(PluginCall call) {
+        saveCall(call);
+
         //Initialise NfcAdapter
         nfcAdapter = NfcAdapter.getDefaultAdapter(getContext());
         //If no NfcAdapter, display that the device has no NFC

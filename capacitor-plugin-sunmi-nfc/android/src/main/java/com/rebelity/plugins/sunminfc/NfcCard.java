@@ -1,30 +1,31 @@
 package com.rebelity.plugins.sunminfc;
 
 public class NfcCard {
-    private String      decID;
+    private String      decId;
     private String      reversedDecId;
-    private String      hexID;
-    private String      reversedHexID;
+    private String      hexId;
+    private String      reversedHexId;
 
-    public NfcCard(String decID, String reversedDecId, String hexID, String reversedHexID) {
-        this.decID = decID;
+    public NfcCard(String decId, String reversedDecId, String hexId, String reversedHexId) {
+        this.decId = decId;
         this.reversedDecId = reversedDecId;
-        this.hexID = reversedHexID;
+        this.hexId = hexId;
+        this.reversedHexId = reversedHexId;
     }
 
-    public String getDecID() {
-        return decID;
+    public String getDecId() {
+        return decId;
     }
 
     public String getReversedDecId() {
         return reversedDecId;
     }
 
-    public String getHexID() {
-        return hexID;
+    public String getHexId() {
+        return hexId;
     }
 
-    public String getReversedHexID() {
-        return reversedHexID;
+    public String reversedHexId() {
+        return reversedHexId;
     }
 }

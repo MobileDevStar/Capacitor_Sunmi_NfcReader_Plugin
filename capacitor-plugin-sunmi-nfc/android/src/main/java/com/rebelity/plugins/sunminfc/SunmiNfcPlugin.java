@@ -23,15 +23,10 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
 
-@CapacitorPlugin(
-        name = "SunmiNfc",
-        permissions = {
-                @Permission(
-                        alias = "nfc",
-                        strings = {Manifest.permission.NFC}
-                )
-        }
+@NativePlugin(
+        requestCodes={SunmiNfcPlugin.REQUEST_NFC}
 )
+
 public class SunmiNfcPlugin extends Plugin {
 
     //Intialize attributes
@@ -63,32 +58,39 @@ public class SunmiNfcPlugin extends Plugin {
 
     @PluginMethod()
     public void discoverNfcCard(PluginCall call) {
-        if (getPermissionState("nfc") != PermissionState.GRANTED) {
-            requestPermissionForAlias("nfc", call, "nfcPermsCallback");
-        } else {
-            initNdfAdapter(call);
-        }
-    }
-
-    @PermissionCallback
-    private void nfcPermsCallback(PluginCall call) {
-        if (getPermissionState("nfc") == PermissionState.GRANTED) {
-            initNdfAdapter(call);
-        } else {
-            call.reject("Permission is required to read nfc card");
-        }
-    }
-
-    private void initNdfAdapter(PluginCall call) {
         saveCall(call);
+        pluginRequestPermission(Manifest.permission.NFC, REQUEST_NFC);
+    }
 
+    @Override
+    protected void handleRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.handleRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        PluginCall savedCall = getSavedCall();
+        if (savedCall == null) {
+            Log.d("Test", "No stored plugin call for permissions request result");
+            return;
+        }
+
+        for(int result : grantResults) {
+            if (result == PackageManager.PERMISSION_DENIED) {
+                savedCall.reject("User denied permission");
+                Log.d(TAG, "User denied permission");
+                return;
+            }
+        }
+
+        if (requestCode == REQUEST_NFC) {
+            // We got the permission!
+            initNfcAdapter(savedCall);
+        }
+    }
+
+    private void initNfcAdapter(PluginCall call) {
         //Initialise NfcAdapter
         nfcAdapter = NfcAdapter.getDefaultAdapter(getContext());
         //If no NfcAdapter, display that the device has no NFC
         if (nfcAdapter == null){
-            Toast.makeText(activity,"NO NFC Capabilities",
-                    Toast.LENGTH_SHORT).show();
-
             call.reject("NO NFC Capabilities");
         } else {
             //Create a PendingIntent object so the Android system can

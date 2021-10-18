@@ -1,6 +1,5 @@
 import { WebPlugin } from '@capacitor/core';
-
-import type { SunmiNfcPlugin } from './definitions';
+import { SunmiNfcPlugin } from './definitions';
 
 export class SunmiNfcWeb extends WebPlugin implements SunmiNfcPlugin {
   constructor() {
@@ -26,3 +25,10 @@ export class SunmiNfcWeb extends WebPlugin implements SunmiNfcPlugin {
     };
   }
 }
+
+const SunmiNfc = new SunmiNfcWeb();
+
+export { SunmiNfc };
+
+import { registerWebPlugin } from '@capacitor/core';
+registerWebPlugin(SunmiNfc);

@@ -17,10 +17,10 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 
 @NativePlugin(
-        requestCodes={SunmiNfcPlugin.REQUEST_NFC}
+        requestCodes={SunmiNfc.REQUEST_NFC}
 )
 
-public class SunmiNfcPlugin extends Plugin {
+public class SunmiNfc extends Plugin {
 
     //Intialize attributes
     NfcAdapter nfcAdapter;
@@ -84,6 +84,7 @@ public class SunmiNfcPlugin extends Plugin {
         nfcAdapter = NfcAdapter.getDefaultAdapter(getContext());
         //If no NfcAdapter, display that the device has no NFC
         if (nfcAdapter == null){
+            Log.d(TAG, "NO NFC Capabilities");
             call.reject("NO NFC Capabilities");
         } else {
             //Create a PendingIntent object so the Android system can
@@ -99,11 +100,14 @@ public class SunmiNfcPlugin extends Plugin {
      */
     @Override
     protected void handleOnResume() {
-        assert nfcAdapter != null;
+        //assert nfcAdapter != null;
         //nfcAdapter.enableForegroundDispatch(context,pendingIntent,
         //                                    intentFilterArray,
         //                                    techListsArray)
-        nfcAdapter.enableForegroundDispatch(activity, pendingIntent,null,null);
+        if (nfcAdapter != null) {
+            nfcAdapter.enableForegroundDispatch(activity, pendingIntent,null,null);
+        }
+
     }
 
     /**
@@ -114,6 +118,14 @@ public class SunmiNfcPlugin extends Plugin {
         if (nfcAdapter != null) {
             nfcAdapter.disableForegroundDispatch(activity);
         }
+    }
+
+    /**
+     * Handle onDestroy
+     */
+    @Override
+    protected void handleOnDestroy() {
+        nfcAdapter = null;
     }
 
     /**
@@ -131,12 +143,18 @@ public class SunmiNfcPlugin extends Plugin {
         if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(action)
                 || NfcAdapter.ACTION_TECH_DISCOVERED.equals(action)
                 || NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)) {
-            Tag tag = (Tag) intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
-            assert tag != null;
 
             PluginCall savedCall = getSavedCall();
             if (savedCall == null) {
                 Log.d(TAG, "No stored plugin call for permissions request result");
+                return;
+            }
+
+            Tag tag = (Tag) intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+
+            if (tag == null) {
+                Log.d(TAG, "NO NFC Tag");
+                savedCall.reject("NO NFC Tag");
                 return;
             }
 

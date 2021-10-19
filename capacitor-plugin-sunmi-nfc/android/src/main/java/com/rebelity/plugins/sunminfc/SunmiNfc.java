@@ -162,8 +162,11 @@ public class SunmiNfc extends Plugin {
             NfcCard payload = detectTagData(tag);
 
             JSObject ret = new JSObject();
-            ret.put("results", payload);
-            savedCall.resolve(ret);
+            ret.put("decId", payload.getDecId());
+            ret.put("reversedDecId", payload.getReversedDecId());
+            ret.put("hexId", payload.getHexId());
+            ret.put("reversedHexId", payload.getReversedHexId());
+            savedCall.success(ret);
         }
     }
 

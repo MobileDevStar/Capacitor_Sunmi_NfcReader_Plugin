@@ -14,14 +14,12 @@ export class SunmiNfcWeb extends WebPlugin implements SunmiNfcPlugin {
     return options;
   }
 
-  async discoverNfcCard(): Promise<{ results: any }> {
+  async discoverNfcCard(): Promise<{ decId: string, reversedDecId: string, hexId: string, reversedHexId: string }> {
     return {
-      results: {
-        decId: '1234567890',
-        reversedDecId: '3523384905',
-        hexId: '49 96 02 D2',
-        reversedHexId: 'D2 02 96 49',
-      }
+      decId: '1234567890',
+      reversedDecId: '3523384905',
+      hexId: '49 96 02 D2',
+      reversedHexId: 'D2 02 96 49',
     };
   }
 }

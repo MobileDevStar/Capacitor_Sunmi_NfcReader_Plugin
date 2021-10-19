@@ -25,7 +25,7 @@ public class NfcCard {
         return hexId;
     }
 
-    public String reversedHexId() {
+    public String getReversedHexId() {
         return reversedHexId;
     }
 }

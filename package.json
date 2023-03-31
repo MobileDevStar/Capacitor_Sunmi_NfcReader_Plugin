@@ -1,6 +1,6 @@
 {
   "name": "capacitor-plugin-sunmi-nfc",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "This is a capacitor plugin to handle the nfc card",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",

@@ -48,9 +48,9 @@ public class SunmiNfcPlugin extends Plugin {
     @PluginMethod()
     public void discoverNfcCard(PluginCall call) {
         saveCall(call);
-        pluginRequestPermission(Manifest.permission.NFC, REQUEST_NFC);
+        initNfcAdapter(call);
     }
-
+/*
     @Override
     protected void handleRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.handleRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -74,7 +74,7 @@ public class SunmiNfcPlugin extends Plugin {
             initNfcAdapter(savedCall);
         }
     }
-
+*/
     private void initNfcAdapter(PluginCall call) {
         //Initialise NfcAdapter
         nfcAdapter = NfcAdapter.getDefaultAdapter(getContext());

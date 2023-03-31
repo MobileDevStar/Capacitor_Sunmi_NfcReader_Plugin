@@ -1,9 +1,9 @@
 package com.rebelity.plugins.sunminfc;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.util.Log;
@@ -15,16 +15,23 @@ import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.annotation.Permission;
 
-@CapacitorPlugin(name = "SunmiNfc", requestCodes={SunmiNfcPlugin.REQUEST_NFC})
+@CapacitorPlugin(
+    name = "SunmiNfc",
+    permissions = {
+        @Permission(strings = { Manifest.permission.NFC }, alias = "nfc")
+    }
+)
 public class SunmiNfcPlugin extends Plugin {
 
     protected final String TAG = "SunmiNfcPlugin";
-    protected static final int REQUEST_NFC = 1993;
 
     NfcAdapter nfcAdapter;
     PendingIntent pendingIntent;
     AppCompatActivity activity;
+
+    PluginCall      pCall;
 
     /**
      * Called when the plugin has been connected to the bridge
@@ -47,8 +54,9 @@ public class SunmiNfcPlugin extends Plugin {
 
     @PluginMethod()
     public void discoverNfcCard(PluginCall call) {
-        saveCall(call);
-        initNfcAdapter(call);
+        pCall = call;
+        pCall.setKeepAlive(true);
+        initNfcAdapter(pCall);
     }
 /*
     @Override
@@ -75,6 +83,7 @@ public class SunmiNfcPlugin extends Plugin {
         }
     }
 */
+    @SuppressLint("UnspecifiedImmutableFlag")
     private void initNfcAdapter(PluginCall call) {
         //Initialise NfcAdapter
         nfcAdapter = NfcAdapter.getDefaultAdapter(getContext());
@@ -126,7 +135,6 @@ public class SunmiNfcPlugin extends Plugin {
 
     /**
      * Handle onNewIntent
-     * @param intent
      */
     @Override
     protected void handleOnNewIntent(Intent intent) {
@@ -140,8 +148,7 @@ public class SunmiNfcPlugin extends Plugin {
                 || NfcAdapter.ACTION_TECH_DISCOVERED.equals(action)
                 || NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)) {
 
-            PluginCall savedCall = getSavedCall();
-            if (savedCall == null) {
+            if (pCall == null) {
                 Log.d(TAG, "No stored plugin call for permissions request result");
                 return;
             }
@@ -150,7 +157,7 @@ public class SunmiNfcPlugin extends Plugin {
 
             if (tag == null) {
                 Log.d(TAG, "NO NFC Tag");
-                savedCall.reject("NO NFC Tag");
+                pCall.reject("NO NFC Tag");
                 return;
             }
 
@@ -164,89 +171,19 @@ public class SunmiNfcPlugin extends Plugin {
             ret.put("reversedDecId", payload.getReversedDecId());
             ret.put("hexId", payload.getHexId());
             ret.put("reversedHexId", payload.getReversedHexId());
-            savedCall.success(ret);
+            pCall.resolve(ret);
         }
     }
 
     private NfcCard detectTagData(Tag tag) {
         byte[] id = tag.getId();
 
-        String decId = new StringBuilder().append(toDec(id)).toString();
-        String reversedDecId = new StringBuilder().append(toReversedDec(id)).toString();
-        String hexId = new StringBuilder().append(toHex(id)).toString();
-        String reversedHexId = new StringBuilder().append(toReversedHex(id)).toString();
+        String decId = String.valueOf(toDec(id));
+        String reversedDecId = String.valueOf(toReversedDec(id));
+        String hexId = toHex(id);
+        String reversedHexId = toReversedHex(id);
 
-        NfcCard nfcCard = new NfcCard(decId, reversedDecId, hexId, reversedHexId);
-
-        return nfcCard;
-
-
-        /*
-        String prefix = "android.nfc.tech.";
-        sb.append("Technologies: ");
-        for (String tech : tag.getTechList()) {
-            sb.append(tech.substring(prefix.length()));
-            sb.append(", ");
-        }
-
-        sb.delete(sb.length() - 2, sb.length());
-
-        for (String tech : tag.getTechList()) {
-            if (tech.equals(MifareClassic.class.getName())) {
-                sb.append('\n');
-                String type = "Unknown";
-
-                try {
-                    MifareClassic mifareTag = MifareClassic.get(tag);
-
-                    switch (mifareTag.getType()) {
-                        case MifareClassic.TYPE_CLASSIC:
-                            type = "Classic";
-                            break;
-                        case MifareClassic.TYPE_PLUS:
-                            type = "Plus";
-                            break;
-                        case MifareClassic.TYPE_PRO:
-                            type = "Pro";
-                            break;
-                    }
-                    sb.append("Mifare Classic type: ");
-                    sb.append(type);
-                    sb.append('\n');
-
-                    sb.append("Mifare size: ");
-                    sb.append(mifareTag.getSize() + " bytes");
-                    sb.append('\n');
-
-                    sb.append("Mifare sectors: ");
-                    sb.append(mifareTag.getSectorCount());
-                    sb.append('\n');
-
-                    sb.append("Mifare blocks: ");
-                    sb.append(mifareTag.getBlockCount());
-                } catch (Exception e) {
-                    sb.append("Mifare classic error: " + e.getMessage());
-                }
-            }
-
-            if (tech.equals(MifareUltralight.class.getName())) {
-                sb.append('\n');
-                MifareUltralight mifareUlTag = MifareUltralight.get(tag);
-                String type = "Unknown";
-                switch (mifareUlTag.getType()) {
-                    case MifareUltralight.TYPE_ULTRALIGHT:
-                        type = "Ultralight";
-                        break;
-                    case MifareUltralight.TYPE_ULTRALIGHT_C:
-                        type = "Ultralight C";
-                        break;
-                }
-                sb.append("Mifare Ultralight type: ");
-                sb.append(type);
-            }
-        }
-        Log.v("test",sb.toString());
-        return sb.toString();*/
+        return new NfcCard(decId, reversedDecId, hexId, reversedHexId);
     }
     private String toHex(byte[] bytes) {
         StringBuilder sb = new StringBuilder();
@@ -279,10 +216,10 @@ public class SunmiNfcPlugin extends Plugin {
     private long toDec(byte[] bytes) {
         long result = 0;
         long factor = 1;
-        for (int i = 0; i < bytes.length; ++i) {
-            long value = bytes[i] & 0xffl;
+        for (byte aByte : bytes) {
+            long value = aByte & 0xffL;
             result += value * factor;
-            factor *= 256l;
+            factor *= 256L;
         }
         return result;
     }
@@ -291,9 +228,9 @@ public class SunmiNfcPlugin extends Plugin {
         long result = 0;
         long factor = 1;
         for (int i = bytes.length - 1; i >= 0; --i) {
-            long value = bytes[i] & 0xffl;
+            long value = bytes[i] & 0xffL;
             result += value * factor;
-            factor *= 256l;
+            factor *= 256L;
         }
         return result;
     }
